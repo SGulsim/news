@@ -4,24 +4,47 @@ import styles from './styles.module.css';
 import { getNews } from '../../api/apiNews';
 import NewsList from '../../components/NewsList/NewsList';
 import Skeleton from '../../components/Skeleton/Skeleton';
+import Pagination from '../../components/Pagination/Pagination';
 
 const Main = () => {
 	const [news, setNews] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [currentPage, setCurrentPage] = useState(1);
+	const totalPages = 10;
+	const pageSize = 10;
+
+	const fetchNews = async currentPage => {
+		try {
+			setIsLoading(true);
+			const response = await getNews(currentPage, pageSize);
+			setNews(response.news);
+			setIsLoading(false);
+		} catch (error) {
+			throw new Error({ error });
+		}
+	};
 
 	useEffect(() => {
-		const fetchNews = async () => {
-			try {
-				setIsLoading(true);
-				const response = await getNews();
-				setNews(response.news);
-				setIsLoading(false);
-			} catch (error) {
-				throw new Error({ error });
-			}
-		};
-		fetchNews();
-	}, []);
+		fetchNews(currentPage);
+	}, [currentPage]);
+
+	const handleNextPage = () => {
+		if (currentPage < totalPages) {
+			setCurrentPage(currentPage + 1);
+		}
+	};
+
+	const handlePreviousPage = () => {
+		if (currentPage > 1) {
+			setCurrentPage(currentPage - 1);
+		}
+	};
+
+	const handlePageClick = pageNumber => {
+		if (currentPage > 1) {
+			setCurrentPage(pageNumber);
+		}
+	};
 
 	return (
 		<main className={styles.main}>
@@ -30,11 +53,28 @@ const Main = () => {
 			) : (
 				<Skeleton count={1} type={'banner'} />
 			)}
+
+			<Pagination
+				handlePageClick={handlePageClick}
+				handleNextPage={handleNextPage}
+				handlePreviousPage={handlePreviousPage}
+				currentPage={currentPage}
+				totalPages={totalPages}
+			/>
+
 			{!isLoading ? (
 				<NewsList news={news} />
 			) : (
 				<Skeleton count={10} type={'item'} />
 			)}
+
+			<Pagination
+				handlePageClick={handlePageClick}
+				handleNextPage={handleNextPage}
+				handlePreviousPage={handlePreviousPage}
+				currentPage={currentPage}
+				totalPages={totalPages}
+			/>
 		</main>
 	);
 };
